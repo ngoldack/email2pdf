@@ -4,6 +4,20 @@ MAINTAINER Nicolas Goldack <nicolas-goldack@live.de>
 
 WORKDIR /email2pdf/
 
+# Build-time metadata as defined at http://label-schema.org
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION
+LABEL io.ntec.email2pdf.build-date=$BUILD_DATE \
+      io.ntec.email2pdf.name="Email2Pdf" \
+      io.ntec.email2pdf.description="Email to pdf downloader written in python" \
+      io.ntec.email2pdf.url="https://github.com/ntec-io/Email2Pdf" \
+      io.ntec.email2pdf.vcs-ref=$VCS_REF \
+      io.ntec.email2pdf.vcs-url="https://github.com/ntec-io/Email2Pdf" \
+      io.ntec.email2pdf.vendor="ntec.io" \
+      io.ntec.email2pdf.version=$VERSION \
+      io.ntec.email2pdf.schema-version="1.0"
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.8 \
     wkhtmltopdf \
