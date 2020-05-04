@@ -1,0 +1,14 @@
+version: '3'
+services:
+    email2pdf:
+        image: email2pdf
+        volumes:
+            - /PATH/TO/OUTPUT/FOLDER/:/output/
+        environment:
+            - IMAP_SERVER=
+            - IMAP_USERNAME=
+            - IMAP_PASSWORD=
+            - IMAP_INPUT_FOLDER=
+            - IMAP_OUTPUT_FOLDER=
+            - IMAP_SCAN_INTERVAL=60
+
