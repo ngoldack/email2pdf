@@ -22,48 +22,52 @@ ALLOWED_TYPES = [
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 while True:
-    print("Starting!")
-    with MailBox(IMAP_SERVER).login(IMAP_USERNAME, IMAP_PASSWORD, initial_folder=IMAP_INPUT_FOLDER) as mailbox:
-        for mail in mailbox.fetch():
-            print("Processing Message: " + mail.subject)
-            if not os.path.exists(TMP_DIR + mail.subject + "/attachments/"):
-                os.makedirs(TMP_DIR + mail.subject + "/attachments/")
+    try:
+        print("Starting!")
+        with MailBox(IMAP_SERVER).login(IMAP_USERNAME, IMAP_PASSWORD, initial_folder=IMAP_INPUT_FOLDER) as mailbox:
+            for mail in mailbox.fetch():
+                print("Processing Message: " + mail.subject)
+                if not os.path.exists(TMP_DIR + mail.subject + "/attachments/"):
+                    os.makedirs(TMP_DIR + mail.subject + "/attachments/")
 
-            for attachment in mail.attachments:
-                if attachment.content_type in ALLOWED_TYPES:
-                    print("Processing attachment: ", attachment.filename, " | Type: ", attachment.content_type)
-                    with open(TMP_DIR + mail.subject + "/attachments/" + attachment.filename, "wb") as attachment_file:
-                        attachment_file.write(attachment.payload)
+                for attachment in mail.attachments:
+                    if attachment.content_type in ALLOWED_TYPES:
+                        print("Processing attachment: ", attachment.filename, " | Type: ", attachment.content_type)
+                        with open(TMP_DIR + mail.subject + "/attachments/" + attachment.filename, "wb") as attachment_file:
+                            attachment_file.write(attachment.payload)
 
-            with open(TMP_DIR + mail.subject + "/" + mail.subject + ".eml", "w") as file:
-                file.write(mail.obj.as_string())
+                with open(TMP_DIR + mail.subject + "/" + mail.subject + ".eml", "w") as file:
+                    file.write(mail.obj.as_string())
 
-            print("Converting Email: eml to html")
-            eml = CkEmail()
-            success = eml.LoadEml(TMP_DIR + mail.subject + "/" + mail.subject + ".eml")
-            if success is False:
-                print(eml.lastErrorText())
-                exit(-1)
-            else:
-                with open(TMP_DIR + mail.subject + "/" + mail.subject + ".html", "w") as file:
-                    file.write(eml.body())
+                print("Converting Email: eml to html")
+                eml = CkEmail()
+                success = eml.LoadEml(TMP_DIR + mail.subject + "/" + mail.subject + ".eml")
+                if success is False:
+                    print(eml.lastErrorText())
+                    exit(-1)
+                else:
+                    with open(TMP_DIR + mail.subject + "/" + mail.subject + ".html", "w") as file:
+                        file.write(eml.body())
 
-            print("Converting Email: html to pdf")
-            pdfkit.from_file(TMP_DIR + mail.subject + "/" + mail.subject + ".html",
-                             TMP_DIR + mail.subject + "/" + mail.subject + ".pdf")
+                print("Converting Email: html to pdf")
+                pdfkit.from_file(TMP_DIR + mail.subject + "/" + mail.subject + ".html",
+                                 TMP_DIR + mail.subject + "/" + mail.subject + ".pdf")
 
-            merger = PdfFileMerger()
-            merger.append(TMP_DIR + mail.subject + "/" + mail.subject + ".pdf")
-            for pdf in os.listdir(TMP_DIR + mail.subject + "/attachments/"):
-                if pdf.endswith(".pdf"):
-                    merger.append(TMP_DIR + mail.subject + "/attachments/" + pdf)
+                merger = PdfFileMerger()
+                merger.append(TMP_DIR + mail.subject + "/" + mail.subject + ".pdf")
+                for pdf in os.listdir(TMP_DIR + mail.subject + "/attachments/"):
+                    if pdf.endswith(".pdf"):
+                        merger.append(TMP_DIR + mail.subject + "/attachments/" + pdf)
 
-            merger.write(OUTPUT_DIR + mail.subject + ".pdf")
+                merger.write(OUTPUT_DIR + mail.subject + ".pdf")
 
-        print("Moving all mails to IMAP_OUTPUT folder")
-        mailbox.move(mailbox.fetch(), IMAP_OUTPUT_FOLDER)
+            print("Moving all mails to IMAP_OUTPUT folder")
+            mailbox.move(mailbox.fetch(), IMAP_OUTPUT_FOLDER)
 
-    print("Finished!")
+        print("Finished!")
+
+    except TimeoutError:
+        print("Connection timeout!")
 
     time.sleep(IMAP_SCAN_INTERVAL)
 
